@@ -9,7 +9,7 @@ Praktikum Jaringan Komputer Modul 3 Tahun 2024
 
 # Laporan Resmi
 ## Topologi
-- ![topologi]()
+- ![topologi](https://github.com/sylxer/Jarkom-Modul-3-IT06-2024/blob/main/ss/topo.png)
 
 ## Config
 - Arakis
@@ -315,8 +315,8 @@ iface eth0 inet static
 host -t A atreides.it06.com
 host -t A harkonen.it06.com
 ```
-- ![topologi]()
-- ![topologi]()
+- ![topologi](https://github.com/sylxer/Jarkom-Modul-3-IT06-2024/blob/main/ss/1.1.png)
+- ![topologi](https://github.com/sylxer/Jarkom-Modul-3-IT06-2024/blob/main/ss/1.2.png)
 
 # Soal 2
 Client yang melalui House Harkonen mendapatkan range IP dari [prefix IP].1.14 - [prefix IP].1.28 dan [prefix IP].1.49 - [prefix IP].1.70
@@ -427,12 +427,12 @@ Stop Client, Jalankan/Start Client kembali dan jalankan command berikut
 ```
 ip a
 ```
-- ![topologi]()
-- ![topologi]()
-- ![topologi]()
-- ![topologi]()
-- ![topologi]()
-- ![topologi]()
+- ![topologi](https://github.com/sylxer/Jarkom-Modul-3-IT06-2024/blob/main/ss/2.1.png)
+- ![topologi](https://github.com/sylxer/Jarkom-Modul-3-IT06-2024/blob/main/ss/2.2.png)
+- ![topologi](https://github.com/sylxer/Jarkom-Modul-3-IT06-2024/blob/main/ss/2.3.png)
+- ![topologi](https://github.com/sylxer/Jarkom-Modul-3-IT06-2024/blob/main/ss/2.4.png)
+- ![topologi](https://github.com/sylxer/Jarkom-Modul-3-IT06-2024/blob/main/ss/2.5.png)
+- ![topologi](https://github.com/sylxer/Jarkom-Modul-3-IT06-2024/blob/main/ss/2.6.png)
     
 # Soal 6
 Vladimir Harkonen memerintahkan setiap worker(harkonen) PHP, untuk melakukan konfigurasi virtual host untuk website berikut dengan menggunakan php 7.3.
@@ -561,9 +561,9 @@ service bind9 restart
 ```
 lynx harkonen.it06.com
 ```
-- ![topologi]()
-- ![topologi]()
-- ![topologi]()
+- ![topologi](https://github.com/sylxer/Jarkom-Modul-3-IT06-2024/blob/main/ss/6.1.png)
+- ![topologi](https://github.com/sylxer/Jarkom-Modul-3-IT06-2024/blob/main/ss/6.2.png)
+- ![topologi](https://github.com/sylxer/Jarkom-Modul-3-IT06-2024/blob/main/ss/6.3.png)
   
 # Soal 7
 Aturlah agar Stilgar dari fremen dapat dapat bekerja sama dengan maksimal, lalu lakukan testing dengan 5000 request dan 150 request/second. 
@@ -577,8 +577,8 @@ Ketika request berhasil dijalankan maka hasilnya seperti berikut:
 ```
 lynx harkonen.it06.com
 ```
-- ![topologi]()
-- ![topologi]()
+- ![topologi](https://github.com/sylxer/Jarkom-Modul-3-IT06-2024/blob/main/ss/7.1.png)
+- ![topologi](https://github.com/sylxer/Jarkom-Modul-3-IT06-2024/blob/main/ss/7.2.png)
 
 
 # Soal 8
@@ -620,7 +620,7 @@ rm -rf /etc/nginx/sites-enabled/default
 service nginx restart
 nginx -t
 ```
-- ![topologi]()
+- ![topologi](https://github.com/sylxer/Jarkom-Modul-3-IT06-2024/blob/main/ss/8.1.png)
 
 Algoritma Weighted Round-Robin
 ```
@@ -647,7 +647,7 @@ rm -rf /etc/nginx/sites-enabled/default
 service nginx restart
 nginx -t
 ```
-- ![topologi]()
+- ![topologi](https://github.com/sylxer/Jarkom-Modul-3-IT06-2024/blob/main/ss/8.2.png)
 
 Algoritma Least Connection
 ```
@@ -676,7 +676,7 @@ rm -rf /etc/nginx/sites-enabled/default
 service nginx restart
 nginx -t
 ```
-- ![topologi]()
+- ![topologi](https://github.com/sylxer/Jarkom-Modul-3-IT06-2024/blob/main/ss/8.3.png)
 
 Algoritma IP Hash
 ```
@@ -706,7 +706,7 @@ rm -rf /etc/nginx/sites-enabled/default
 service nginx restart
 nginx -t
 ```
-- ![topologi]()
+- ![topologi](https://github.com/sylxer/Jarkom-Modul-3-IT06-2024/blob/main/ss/8.4.png)
 
 Algoritma Generic Hash
 ```
@@ -737,10 +737,10 @@ rm -rf /etc/nginx/sites-enabled/default
 service nginx restart
 nginx -t
 ```
-- ![topologi]()
+- ![topologi](https://github.com/sylxer/Jarkom-Modul-3-IT06-2024/blob/main/ss/8.5.png)
 
 Grafik
-- ![topologi]()
+- ![topologi](https://github.com/sylxer/Jarkom-Modul-3-IT06-2024/blob/main/ss/8.6.png)
 
 # Soal 9
 Dengan menggunakan algoritma Least-Connection, lakukan testing dengan menggunakan 3 worker, 2 worker, dan 1 worker sebanyak 1000 request dengan 10 request/second, kemudian tambahkan grafiknya pada peta.
@@ -778,20 +778,24 @@ ab -n 1000 -c 10 http://harkonen.it06.com/
 ```
 
 - 3 Worker
+- - ![topologi](https://github.com/sylxer/Jarkom-Modul-3-IT06-2024/blob/main/ss/9.1.png)
   ```
   3 Worker: 757.29 [#/sec]
   ```
 - 2 Worker
+- - ![topologi](https://github.com/sylxer/Jarkom-Modul-3-IT06-2024/blob/main/ss/9.2.png)
   ```
   2 Worker: 799.75 [#/sec]
   ```
 - 1 Worker
+- - ![topologi](https://github.com/sylxer/Jarkom-Modul-3-IT06-2024/blob/main/ss/9.3.png)
   ```
   1 Worker: 867.98 [#/sec]
   ```
 
-Grafik
-
+-Grafik
+- ![topologi](https://github.com/sylxer/Jarkom-Modul-3-IT06-2024/blob/main/ss/9.4.png)
+  
 # Soal 10
 Selanjutnya coba tambahkan keamanan dengan konfigurasi autentikasi di LB dengan dengan kombinasi username: “secmart” dan password: “kcksyyy”, dengan yyy merupakan kode kelompok. Terakhir simpan file “htpasswd” nya di /etc/nginx/supersecret/
 
@@ -828,13 +832,13 @@ nginx -t
 
 ### Test Result
 Alert saat pertama kali membuka Website
-- ![topologi]()
+- ![topologi](https://github.com/sylxer/Jarkom-Modul-3-IT06-2024/blob/main/ss/10.1.png)
 Tampilan ketika diperintahkan untuk memasukkan Username
-- ![topologi]()
+- ![topologi](https://github.com/sylxer/Jarkom-Modul-3-IT06-2024/blob/main/ss/10.2.png)
 Tampilan ketika diperintahkan untuk memasukkan Password 
-- ![topologi]()
+- ![topologi](https://github.com/sylxer/Jarkom-Modul-3-IT06-2024/blob/main/ss/10.3.png)
 Hasil ketika berhasil memasukkan Username dan Password dengan benar  
-- ![topologi]()
+- ![topologi](https://github.com/sylxer/Jarkom-Modul-3-IT06-2024/blob/main/ss/10.4.png)
 
 # Soal 11
 
