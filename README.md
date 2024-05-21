@@ -8,3 +8,5 @@ Praktikum Jaringan Komputer Modul 3 Tahun 2024
 | Muhammad Harvian Dito Syahputra | 5027221039 |
 
 # Laporan Resmi
+## Topologi
+- ![topologi]()
