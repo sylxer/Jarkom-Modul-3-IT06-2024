@@ -310,3 +310,572 @@ iface eth0 inet static
 	netmask 255.255.255.0
 	gateway 192.236.2.0
 ```
+# Soal 11
+
+Lalu buat untuk setiap request yang mengandung /dune akan di proxy passing menuju halaman https://www.dunemovie.com.au/. (11) hint: (proxy_pass)
+
+## Stilgar
+
+Dilakukan konfigurasi pada Load Balancer Stilgar untuk mengarahkan endpoint /dune ke https://www.dunemovie.com.au/ dengan menggunakan proxy pass.
+
+```
+echo '
+upstream myweb  {
+        server 192.236.1.1; #IP Feyd
+        server 192.236.1.2; #IP Rabban
+        server 192.236.1.3; #IP Vladimir
+}
+
+server {
+        listen 80;
+        server_name harkonen.it06.com;
+
+        location / {
+        proxy_pass http://myweb;
+        auth_basic "Restricted Access";
+        auth_basic_user_file /etc/nginx/supersecret/.htpasswd;
+        }
+
+        location /dune {
+        proxy_pass https://www.dunemovie.com.au/;
+        proxy_set_header Host www.dunemovie.com.au;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        }
+
+}' > /etc/nginx/sites-available/lb-jarkom
+
+unlink /etc/nginx/sites-enabled/lb-jarkom
+ln -s /etc/nginx/sites-available/lb-jarkom /etc/nginx/sites-enabled
+rm -rf /etc/nginx/sites-enabled/default
+
+service nginx restart
+nginx -t
+```
+
+## Testing
+Dilakukan lynx harkonen.it06.com/dune pada client
+![Screenshot 2024-05-17 211732](https://github.com/sylxer/Jarkom-Modul-3-IT06-2024/assets/115382618/8927ee77-e4b0-497d-8683-d6d1be9fab2b)
+
+# Soal 12
+
+Selanjutnya LB ini hanya boleh diakses oleh client dengan IP [Prefix IP].1.37, [Prefix IP].1.67, [Prefix IP].2.203, dan [Prefix IP].2.207. (12) hint: (fixed in dulu clientnya)
+
+## Stilgar
+
+Dilakukan konfigurasi untuk melakukan allow kepada IP-IP tersebut dan deny pada IP lainnya.
+
+```
+echo '
+upstream myweb  {
+        server 192.236.1.1; #IP Feyd
+        server 192.236.1.2; #IP Rabban
+        server 192.236.1.3; #IP Vladimir
+}
+
+server {
+        listen 80;
+        server_name harkonen.it06.com;
+
+        location / {
+        allow 192.236.1.37;
+        allow 192.236.1.67;
+        allow 192.236.2.203;
+        allow 192.236.2.207;
+        deny all;
+
+        proxy_pass http://myweb;
+        auth_basic "Restricted Access";
+        auth_basic_user_file /etc/nginx/supersecret/.htpasswd;
+        }
+
+        location /dune {
+        proxy_pass https://www.dunemovie.com.au/;
+        proxy_set_header Host www.dunemovie.com.au;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        }
+
+}' > /etc/nginx/sites-available/lb-jarkom
+
+unlink /etc/nginx/sites-enabled/lb-jarkom
+ln -s /etc/nginx/sites-available/lb-jarkom /etc/nginx/sites-enabled
+rm -rf /etc/nginx/sites-enabled/default
+
+service nginx restart
+nginx -t
+```
+
+## Testing
+Dilakukan lynx harkonen.it06.com pada client. Berikut adalah hasil ketika IP yang sedang mengakses harkonen.it06.com bukan IP yang diperbolehkan mengakses web server.
+
+![Screenshot 2024-05-17 211929](https://github.com/sylxer/Jarkom-Modul-3-IT06-2024/assets/115382618/861bdf33-2ec8-41e3-903e-6c3037ef16ea)
+
+Diperlukan allow IP client jika ingin melihat hasil ketika IP diperbolehkan mengakses web server dengan menambahkan "allow [IP];" pada konfigurasi Load Balancer. Berikut adalah hasil ketika IP diperbolehkan mengakses web server.
+
+![Screenshot 2024-05-17 212751](https://github.com/sylxer/Jarkom-Modul-3-IT06-2024/assets/115382618/86120aef-d843-4c9a-8ed7-1daaf60651ec)
+
+# Soal 13
+
+Semua data yang diperlukan, diatur pada Chani dan harus dapat diakses oleh Leto, Duncan, dan Jessica. (13)
+
+## Chani
+
+Dilakukan pembuatan user dan database pada CHANI dengan script berikut.
+
+```
+mysql -u root -p <<EOF
+CREATE USER 'kelompokit06'@'%' IDENTIFIED BY 'passwordit06';
+CREATE USER 'kelompokit06'@'localhost' IDENTIFIED BY 'passwordit06';
+CREATE DATABASE dbkelompokit06;
+GRANT ALL PRIVILEGES ON *.* TO 'kelompokit06'@'%';
+GRANT ALL PRIVILEGES ON *.* TO 'kelompokit06'@'localhost';
+FLUSH PRIVILEGES;
+quit
+EOF
+
+mysql -u kelompokit06 -p'passwordit06' <<EOF
+SHOW DATABASES;
+quit
+EOF
+```
+
+Kemudian dibuat konfigurasi pada /etc/mysql/my.cnf sebagai berikut.
+
+```
+echo "
+[client-server]
+
+!includedir /etc/mysql/conf.d/
+!includedir /etc/mysql/mariadb.conf.d/
+
+[mysqld]
+skip-networking=0
+skip-bind-address" > /etc/mysql/my.cnf
+
+service mysql restart
+```
+
+## Testing
+Dilakukan perintah sheel “mariadb --host=192.236.4.1 --port=3306 --user=kelompokit06 --password=passwordit06” di salah satu laravel worker. Kemudian lakukan “SHOW DATABASES;”.
+
+![Screenshot 2024-05-18 084812](https://github.com/sylxer/Jarkom-Modul-3-IT06-2024/assets/115382618/3775b2ce-b495-46ac-9bc3-749216115c14)
+
+# Soal 14
+
+Leto, Duncan, dan Jessica memiliki atreides Channel sesuai dengan quest guide berikut. Jangan lupa melakukan instalasi PHP8.0 dan Composer (14)
+
+## Laravel Worker
+
+Pertama, dilakukan instalasi requirements untuk melakukan konfigurasi web server sesuai soal.
+
+```
+apt-get update
+apt-get install -y lsb-release ca-certificates apt-transport-https software-properties-common gnupg2
+
+curl -sSLo /usr/share/keyrings/deb.sury.org-php.gpg https://packages.sury.org/php/apt.gpg
+
+sh -c 'echo "deb [signed-by=/usr/share/keyrings/deb.sury.org-php.gpg] https://packages.sury.org/php/ $(lsb_release -sc) main" > /etc/apt/sources.list.d/php.list'
+apt-get update
+
+apt-get install php8.0-mbstring php8.0-xml php8.0-cli php8.0-common php8.0-intl php8.0-opcache php8.0-readline php8.0-mysql php8.0-fpm php8.0-curl unzip wget -y
+apt-get install nginx -y
+
+wget https://getcomposer.org/download/2.0.13/composer.phar
+chmod +x composer.phar
+mv composer.phar /usr/bin/composer
+
+apt-get install git -y
+
+cd /var/www
+git clone https://github.com/martuafernando/laravel-praktikum-jarkom.git
+cd /var/www/laravel-praktikum-jarkom
+cp .env.example .env
+```
+
+Kemudian, dilakukan konfigurasi environment pada laravel-praktikum-jarkom.
+
+```
+echo 'APP_NAME=Laravel
+APP_ENV=local
+APP_KEY=
+APP_DEBUG=true
+APP_URL=http://localhost
+
+LOG_CHANNEL=stack
+LOG_DEPRECATIONS_CHANNEL=null
+LOG_LEVEL=debug
+
+DB_CONNECTION=mysql
+DB_HOST=192.236.4.1
+DB_PORT=3306
+DB_DATABASE=dbkelompokit06
+DB_USERNAME=kelompokit06
+DB_PASSWORD=passwordit06
+
+BROADCAST_DRIVER=log
+CACHE_DRIVER=file
+FILESYSTEM_DISK=local
+QUEUE_CONNECTION=sync
+SESSION_DRIVER=file
+SESSION_LIFETIME=120
+
+MEMCACHED_HOST=127.0.0.1
+
+REDIS_HOST=127.0.0.1
+REDIS_PASSWORD=null
+REDIS_PORT=6379
+
+MAIL_MAILER=smtp
+MAIL_HOST=mailpit
+MAIL_PORT=1025
+MAIL_USERNAME=null
+MAIL_PASSWORD=null
+MAIL_ENCRYPTION=null
+MAIL_FROM_ADDRESS="hello@example.com"
+MAIL_FROM_NAME="${APP_NAME}"
+
+AWS_ACCESS_KEY_ID=
+AWS_SECRET_ACCESS_KEY=
+AWS_DEFAULT_REGION=us-east-1
+AWS_BUCKET=
+AWS_USE_PATH_STYLE_ENDPOINT=false
+
+PUSHER_APP_ID=
+PUSHER_APP_KEY=
+PUSHER_APP_SECRET=
+PUSHER_HOST=
+PUSHER_PORT=443
+PUSHER_SCHEME=https
+PUSHER_APP_CLUSTER=mt1
+
+VITE_PUSHER_APP_KEY="${PUSHER_APP_KEY}"
+VITE_PUSHER_HOST="${PUSHER_HOST}"
+VITE_PUSHER_PORT="${PUSHER_PORT}"
+VITE_PUSHER_SCHEME="${PUSHER_SCHEME}"  
+VITE_PUSHER_APP_CLUSTER="${PUSHER_APP_CLUSTER}"' > /var/www/laravel-praktikum-jarkom/.env
+
+cd /var/www/laravel-praktikum-jarkom && composer update && composer install
+
+cd /var/www/laravel-praktikum-jarkom && php artisan key:generate
+cd /var/www/laravel-praktikum-jarkom && php artisan config:cache
+cd /var/www/laravel-praktikum-jarkom && php artisan migrate
+cd /var/www/laravel-praktikum-jarkom && php artisan db:seed
+cd /var/www/laravel-praktikum-jarkom && php artisan storage:link
+cd /var/www/laravel-praktikum-jarkom && php artisan jwt:secret
+cd /var/www/laravel-praktikum-jarkom && php artisan config:clear
+```
+
+Setelah itu dilakukan konfigurasi web server nginx pada laravel worker.
+
+```
+echo 'server {
+    listen 800x;
+
+    root /var/www/laravel-praktikum-jarkom/public;
+
+    index index.php index.html index.htm;
+    server_name _;
+
+    location / {
+            try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    # pass PHP scripts to FastCGI server
+    location ~ \.php$ {
+      include snippets/fastcgi-php.conf;
+      fastcgi_pass unix:/var/run/php/php8.0-fpm.sock;
+    }
+
+    location ~ /\.ht {
+            deny all;
+    }
+
+    error_log /var/log/nginx/implementasi_error.log;
+    access_log /var/log/nginx/implementasi_access.log;
+}' > /etc/nginx/sites-available/laravel-worker
+
+ln -s /etc/nginx/sites-available/laravel-worker /etc/nginx/sites-enabled/
+
+chown -R www-data.www-data /var/www/laravel-parktikum-jarkom/storage
+
+service nginx start
+service php8.0-fpm start
+```
+
+notes: pada bagian "listen 800x" dengan x adalah pilihan port pada masing-masing worker, misal 8001, 8002, dst.
+
+## Testing
+Dilakukan lynx localhost:[PORT] di worker. [PORT] di sini merupakan port yang digunakan pada masing-masing worker.
+
+![Screenshot 2024-05-18 210814](https://github.com/sylxer/Jarkom-Modul-3-IT06-2024/assets/115382618/9f90f0e2-aa7e-4368-9277-418be9229045)
+
+# Soal 15
+
+atreides Channel memiliki beberapa endpoint yang harus ditesting sebanyak 100 request dengan 10 request/second. Tambahkan response dan hasil testing pada peta.
+POST /auth/register (15)
+
+## Client
+
+Dilakukan pembuatan script untuk memanfaatkan json sebagai file untuk register.
+
+```
+echo '
+{
+  "username": "kelompokit06",
+  "password": "passwordit06"
+}' > register.json
+```
+
+## Testing
+Dilakukan perintah shell berikut. Percobaan dilakukan ke salah satu worker (di sini mengarah ke worker Leto).
+
+```
+ab -n 100 -c 10 -p register.json -T application/json http://192.236.2.3:8001/api/auth/register
+```
+![Screenshot 2024-05-18 211336](https://github.com/sylxer/Jarkom-Modul-3-IT06-2024/assets/115382618/6d0fc8d1-c051-40cb-b918-6bef7361e948)
+
+# Soal 16
+
+atreides Channel memiliki beberapa endpoint yang harus ditesting sebanyak 100 request dengan 10 request/second. Tambahkan response dan hasil testing pada peta.
+POST /auth/login (16)
+
+## Client
+
+Dilakukan pembuatan script untuk memanfaatkan json sebagai file untuk login.
+
+```
+echo '
+{
+  "username": "kelompokit06",
+  "password": "passwordit06"
+}' > login.json
+```
+
+## Testing
+Dilakukan perintah shell berikut. Percobaan dilakukan ke salah satu worker (di sini mengarah ke worker Leto).
+
+```
+ab -n 100 -c 10 -p login.json -T application/json http://192.236.2.3:8001/api/auth/login
+```
+![Screenshot 2024-05-18 211848](https://github.com/sylxer/Jarkom-Modul-3-IT06-2024/assets/115382618/8be3362c-654d-4838-8de0-8cf30fa85451)
+
+# Soal 17
+
+atreides Channel memiliki beberapa endpoint yang harus ditesting sebanyak 100 request dengan 10 request/second. Tambahkan response dan hasil testing pada peta.
+GET /me (17)
+
+## Client
+
+Dilakukan pembuatan script untuk memanfaatkan json sebagai file untuk get endpoint /me.
+
+```
+curl -X POST -H "Content-Type: application/json" -d @login.json http://192.236.2.3:8001/api/auth/login > login_output.txt
+
+token=$(cat login_output.txt | jq -r '.token')
+```
+
+## Testing
+Dilakukan perintah shell berikut. Percobaan dilakukan ke salah satu worker (di sini mengarah ke worker Leto).
+
+```
+ab -n 100 -c 10 -H "Authorization: Bearer $token" http://192.236.2.3:8001/api/me
+```
+![Screenshot 2024-05-18 215032](https://github.com/sylxer/Jarkom-Modul-3-IT06-2024/assets/115382618/9abed29e-c9a1-46fd-9124-e43e24b42456)
+
+# Soal 18
+
+Untuk memastikan ketiganya bekerja sama secara adil untuk mengatur atreides Channel maka implementasikan Proxy Bind pada Stilgar untuk mengaitkan IP dari Leto, Duncan, dan Jessica. (18)
+
+## Irulan
+
+Dilakukan konfigurasi pada DNS server atreides.it06.com yang sebelumnya mengarah ke Leto diubah menjadi mengarah ke Stilgar.
+
+```
+echo ';
+; BIND data file for local loopback interface
+;
+$TTL    604800
+@       IN      SOA     atreides.it06.com.  root.atreides.it06.com.  (
+                        2023111302      ; Serial
+                        604800          ; Refresh
+                        86400           ; Retry
+                        2419200         ; Expire
+                        604800 )        ; Negative Cache TTL
+;
+@               IN      NS      atreides.it06.com.
+@               IN      A       192.236.4.2 ; IP Stilgar Load Balancer' > /etc/bind/jarkom/atreides.it06.com
+
+service bind9 restart
+```
+
+## Stilgar
+
+Dilakukan konfigurasi pembuatan Load Balancer untuk house atreides.
+
+```
+echo 'upstream worker {
+    server 192.236.2.3:8001; # IP Leto
+    server 192.236.2.2:8002; # IP Duncan
+    server 192.236.2.1:8003; # IP Jessica
+}
+
+server {
+    listen 80;
+    server_name atreides.it06.com;
+
+    location / {
+        proxy_pass http://worker;
+    }
+}
+' > /etc/nginx/sites-available/laravel-worker
+
+ln -s /etc/nginx/sites-available/laravel-worker /etc/nginx/sites-enabled/laravel-worker
+
+service nginx restart
+```
+## Testing
+Dilakukan perintah shell "ab -n 100 -c 10 -p login.json -T application/json http://atreides.it06.com/api/auth/login" di client
+
+![Screenshot 2024-05-18 231959](https://github.com/sylxer/Jarkom-Modul-3-IT06-2024/assets/115382618/c68353d3-cd2a-4f9a-b53e-9d44f001f283)
+
+Dilakukan perintah shell berikut "cat /var/log/nginx/implementasi_access.log" pada masing-masing worker untuk mengetahui log yang mengakses masing-masing worker.
+
+- Leto
+![Screenshot 2024-05-18 232252](https://github.com/sylxer/Jarkom-Modul-3-IT06-2024/assets/115382618/2b27522d-644e-47fc-8dcb-df3cc393b890)
+- Duncan
+![Screenshot 2024-05-18 232231](https://github.com/sylxer/Jarkom-Modul-3-IT06-2024/assets/115382618/9fb49957-f3c0-4f9f-91b0-13c56215ecb5)
+- Jessica
+![Screenshot 2024-05-18 232333](https://github.com/sylxer/Jarkom-Modul-3-IT06-2024/assets/115382618/9304c2fb-1989-47ff-817f-a4d818afb99c)
+
+# Soal 19
+
+Untuk meningkatkan performa dari Worker, coba implementasikan PHP-FPM pada Leto, Duncan, dan Jessica. Untuk testing kinerja naikkan 
+- pm.max_children
+- pm.start_servers
+- pm.min_spare_servers
+- pm.max_spare_servers
+sebanyak tiga percobaan dan lakukan testing sebanyak 100 request dengan 10 request/second kemudian berikan hasil analisisnya pada PDF.(19)
+
+## Laravel Worker
+
+Dilakukan pembuatan beberapa script untuk masing-masing konfigurasi implementasi PHP-FPM. Setiap konfigurasi memiliki tingkatan setting yang berbeda.
+
+#### Konfigurasi Pertama
+```
+echo '[www]
+user = www-data
+group = www-data
+listen = /run/php/php8.0-fpm.sock
+listen.owner = www-data
+listen.group = www-data
+php_admin_value[disable_functions] = exec,passthru,shell_exec,system
+php_admin_flag[allow_url_fopen] = off
+
+; Choose how the process manager will control the number of child processes.
+
+pm = dynamic
+pm.max_children = 5
+pm.start_servers = 2
+pm.min_spare_servers = 1
+pm.max_spare_servers = 3' > /etc/php/8.0/fpm/pool.d/www.conf
+
+service php8.0-fpm restart
+```
+
+#### Konfigurasi Kedua
+```
+echo '[www]
+user = www-data
+group = www-data
+listen = /run/php/php8.0-fpm.sock
+listen.owner = www-data
+listen.group = www-data
+php_admin_value[disable_functions] = exec,passthru,shell_exec,system
+php_admin_flag[allow_url_fopen] = off
+
+; Choose how the process manager will control the number of child processes.
+
+pm = dynamic
+pm.max_children = 25
+pm.start_servers = 5
+pm.min_spare_servers = 3
+pm.max_spare_servers = 10' > /etc/php/8.0/fpm/pool.d/www.conf
+
+service php8.0-fpm restart
+```
+
+#### Konfigurasi Ketiga
+```
+echo '[www]
+user = www-data
+group = www-data
+listen = /run/php/php8.0-fpm.sock
+listen.owner = www-data
+listen.group = www-data
+php_admin_value[disable_functions] = exec,passthru,shell_exec,system
+php_admin_flag[allow_url_fopen] = off
+
+; Choose how the process manager will control the number of child processes.
+
+pm = dynamic
+pm.max_children = 50
+pm.start_servers = 8
+pm.min_spare_servers = 5
+pm.max_spare_servers = 15' > /etc/php/8.0/fpm/pool.d/www.conf
+
+service php8.0-fpm restart
+```
+
+## Testing
+Dilakukan perintah shell "ab -n 100 -c 10 -p login.json -T application/json http://atreides.it06.com/api/auth/login" di client pada setiap konfigurasi
+
+#### Konfigurasi Pertama
+![Screenshot 2024-05-19 123929](https://github.com/sylxer/Jarkom-Modul-3-IT06-2024/assets/115382618/f1f91732-7220-403a-9619-3d9c89130027)
+![Screenshot 2024-05-19 123851](https://github.com/sylxer/Jarkom-Modul-3-IT06-2024/assets/115382618/27ff8c65-8c0f-4c66-986d-ded265cf80f0)
+
+#### Konfigurasi Kedua
+![Screenshot 2024-05-19 124212](https://github.com/sylxer/Jarkom-Modul-3-IT06-2024/assets/115382618/76b3e97b-c4f6-446e-9088-10a863f960a7)
+![Screenshot 2024-05-19 124143](https://github.com/sylxer/Jarkom-Modul-3-IT06-2024/assets/115382618/239ca6cd-2996-4ad6-9b34-bc55d2c4df38)
+
+#### Konfigurasi Ketiga
+![Screenshot 2024-05-19 125553](https://github.com/sylxer/Jarkom-Modul-3-IT06-2024/assets/115382618/d0613a93-6080-4c65-9269-c7a52c7667d7)
+![Screenshot 2024-05-19 124830](https://github.com/sylxer/Jarkom-Modul-3-IT06-2024/assets/115382618/1895da11-007c-45d3-83ae-55742d5a5cd2)
+
+# Soal 20
+
+Nampaknya hanya menggunakan PHP-FPM tidak cukup untuk meningkatkan performa dari worker maka implementasikan Least-Conn pada Stilgar. Untuk testing kinerja dari worker tersebut dilakukan sebanyak 100 request dengan 10 request/second. (20)
+
+## Stilgar
+
+Dilakukan konfigurasi ulang Load Balancer untuk mengubah algoritma Load Balaner yang digunakan menjadi least-conn.
+
+```
+echo 'upstream worker {
+    least_conn;
+    server 192.236.2.3:8001; # IP Leto
+    server 192.236.2.2:8002; # IP Duncan
+    server 192.236.2.1:8003; # IP Jessica
+}
+
+server {
+    listen 80;
+    server_name atreides.it06.com;
+
+    location / {
+        proxy_pass http://worker;
+    }
+}
+' > /etc/nginx/sites-available/laravel-worker
+
+ln -s /etc/nginx/sites-available/laravel-worker /etc/nginx/sites-enabled/laravel-worker
+
+service nginx restart
+```
+
+## Testing
+Dilakukan perintah shell "ab -n 100 -c 10 -p login.json -T application/json http://atreides.it06.com/api/auth/login" di client.
+
+![Screenshot 2024-05-19 122234](https://github.com/sylxer/Jarkom-Modul-3-IT06-2024/assets/115382618/3502e842-edd8-42ac-a5d0-14844b50f8c1)
