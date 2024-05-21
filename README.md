@@ -310,6 +310,532 @@ iface eth0 inet static
 	netmask 255.255.255.0
 	gateway 192.236.2.0
 ```
+
+```
+host -t A atreides.it06.com
+host -t A harkonen.it06.com
+```
+- ![topologi]()
+- ![topologi]()
+
+# Soal 2
+Client yang melalui House Harkonen mendapatkan range IP dari [prefix IP].1.14 - [prefix IP].1.28 dan [prefix IP].1.49 - [prefix IP].1.70
+
+Langkah yang dilakukan yaitu melakukan konfigurasi pada DHCP Server seperti berikut:
+### Script Solution
+```
+echo 'subnet 192.236.1.0 netmask 255.255.255.0 {
+    range 192.236.1.14 192.236.1.28; # range ip untuk client
+    range 192.236.1.49 192.236.1.70; # range ip untuk client
+    option routers 192.236.1.0; # ip gateway switch1
+}' > /etc/dhcp/dhcpd.conf
+```
+
+# Soal 3
+Client yang melalui House Atreides mendapatkan range IP dari [prefix IP].2.15 - [prefix IP].2.25 dan [prefix IP].2 .200 - [prefix IP].2.210 
+
+Sama seperti Question 2, langkah yang dilakukan adalah dengan menambahkan konfigurasi seperti berikut
+### Script Solution
+```
+echo 'subnet 192.236.1.0 netmask 255.255.255.0 {
+    range 192.236.1.14 192.236.1.28; # range ip untuk client
+    range 192.236.1.49 192.236.1.70; # range ip untuk client
+    option routers 192.236.1.0; # ip gateway switch1
+}
+
+subnet 192.236.2.0 netmask 255.255.255.0 {
+    range 192.236.2.15 192.236.2.25;
+    range 192.236.2.200 192.236.2.210;
+    option routers 192.236.2.0;
+}' > /etc/dhcp/dhcpd.conf
+```
+
+# Soal 4
+Client mendapatkan DNS dari Princess Irulan dan dapat terhubung dengan internet melalui DNS tersebut
+
+Agar Domain yang telah dibuat dapat digunakan, perlu menambahkan konfigurasi tambahan option broadcast-address dan option domain-name-servers pada dhcpd.conf
+### Script Solution
+```
+echo 'subnet 192.236.1.0 netmask 255.255.255.0 {
+    range 192.236.1.14 192.236.1.28; # range ip untuk client
+    range 192.236.1.49 192.236.1.70; # range ip untuk client
+    option routers 192.236.1.0; # ip gateway switch1
+    option broadcast-address 192.236.1.255; # mirip ip subnet dengan byte terakhir 255
+    option domain-name-servers 192.236.3.2; # ip dns server
+}
+
+subnet 192.236.2.0 netmask 255.255.255.0 {
+    range 192.236.2.15 192.236.2.25;
+    range 192.236.2.200 192.236.2.210;
+    option routers 192.236.2.0;
+    option broadcast-address 192.236.2.255;
+    option domain-name-servers 192.236.3.2;
+}' > /etc/dhcp/dhcpd.conf
+```
+
+# Soal 5
+Durasi DHCP server meminjamkan alamat IP kepada Client yang melalui House Harkonen selama 5 menit sedangkan pada client yang melalui House Atreides selama 20 menit. Dengan waktu maksimal dialokasikan untuk peminjaman alamat IP selama 87 menit
+
+### Script Solution
+Untuk menambahkan durasi waktu dalam peminjaman IP, dibutuhkan konfigurasi tambahan default-lease-time dan max-lease-time pada dhcpd.conf
+Melakukan konfigurasi pada DHCP Server seperti berikut:
+```
+echo 'subnet 192.236.1.0 netmask 255.255.255.0 {
+    range 192.236.1.14 192.236.1.28; # range ip untuk client
+    range 192.236.1.49 192.236.1.70; # range ip untuk client
+    option routers 192.236.1.0; # ip gateway switch1
+    option broadcast-address 192.236.1.255; # mirip ip subnet dengan byte terakhir 255
+    option domain-name-servers 192.236.3.2; # ip dns server
+    default-lease-time 300; # 5 menit
+    max-lease-time 5220; # 87 menit
+}
+
+subnet 192.236.2.0 netmask 255.255.255.0 {
+    range 192.236.2.15 192.236.2.25;
+    range 192.236.2.200 192.236.2.210;
+    option routers 192.236.2.0;
+    option broadcast-address 192.236.2.255;
+    option domain-name-servers 192.236.3.2;
+    default-lease-time 1200; # 20 menit
+    max-lease-time 5220; # 87 menit
+}
+subnet 192.236.3.0 netmask 255.255.255.0 {
+}
+subnet 192.236.4.0 netmask 255.255.255.0 {
+}' > /etc/dhcp/dhcpd.conf
+
+service isc-dhcp-server restart
+service isc-dhcp-server status
+```
+
+### Script Solution
+melakukan konfigurasi pada Router (DHCP Relay) seperti berikut:
+```
+echo '
+SERVERS="192.236.3.1"
+INTERFACES="eth1 eth2 eth3 eth4"
+OPTIONS=""' > /etc/default/isc-dhcp-relay
+
+echo 'net.ipv4.ip_forward=1' > /etc/sysctl.conf
+
+service isc-dhcp-relay restart
+```
+
+### Test Result
+Jika telah melakukan konfigurasi DHCP Server dan Relay, selanjutnya adalah pembuktian (testing), dilakukan pada Client dengan menjalankan konfigurasi berikut:
+Stop Client, Jalankan/Start Client kembali dan jalankan command berikut
+```
+ip a
+```
+- ![topologi]()
+- ![topologi]()
+- ![topologi]()
+- ![topologi]()
+- ![topologi]()
+- ![topologi]()
+    
+# Soal 6
+Vladimir Harkonen memerintahkan setiap worker(harkonen) PHP, untuk melakukan konfigurasi virtual host untuk website berikut dengan menggunakan php 7.3.
+
+### Script Solution
+melakukan konfigurasi pada Load Balancer seperti berikut:
+```
+echo '
+ upstream myweb  {
+        server 192.236.1.1; #IP Feyd
+        server 192.236.1.2; #IP Rabban
+        server 192.236.1.3; #IP Vladimir
+ }
+
+ server {
+        listen 80;
+        server_name harkonen.it06.com;
+
+        location / {
+        proxy_pass http://myweb;
+        }
+ }' > /etc/nginx/sites-available/lb-jarkom
+
+ln -s /etc/nginx/sites-available/lb-jarkom /etc/nginx/sites-enabled
+rm -rf /etc/nginx/sites-enabled/default
+
+service nginx restart
+nginx -t
+```
+
+Sebelum mengerjakan perlu untuk melakukan setup terlebih dahulu pada seluruh PHP Worker. Jika sudah, silahkan untuk melakukan konfigurasi tambahan sebagai berikut untuk melakukan download dan unzip menggunakan command wget.
+melakukan konfigurasi pada PHP Worker seperti berikut:
+```
+mkdir -p /var/www/harkonen.it06
+
+wget --no-check-certificate 'https://docs.google.com/uc?export=download&id=1lmnXJUbyx1JDt2OA5z_1dEowxozfkn30' -O /var/www/harkonen.it06.zip
+unzip /var/www/harkonen.it06.zip -d /var/www/harkonen.it06
+mv /var/www/harkonen.it06/modul-3 /var/www/harkonen.it06
+rm -rf /var/www/harkonen.it06.zip
+
+echo '
+server {
+
+        listen 80;
+
+        root /var/www/harkonen.it06;
+
+        index index.php index.html index.htm;
+        server_name _;
+
+        location / {
+                        try_files $uri $uri/ /index.php?$query_string;
+        }
+
+        # pass PHP scripts to FastCGI server
+        location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/var/run/php/php7.3-fpm.sock;
+        }
+
+location ~ /\.ht {
+                        deny all;
+        }
+
+        error_log /var/log/nginx/jarkom_error.log;
+        access_log /var/log/nginx/jarkom_access.log;
+ }' > /etc/nginx/sites-available/harkonen.it06
+
+echo '<!DOCTYPE html>
+<html>
+<head>
+    <title>harkonen Map</title>
+    <link rel="stylesheet" type="text/css" href="css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Welcome to harkonen</h1>
+        <p><?php
+            $hostname = gethostname();
+            echo "Request ini dihandle oleh: $hostname<br>"; ?> </p>
+        <p>Enter your name to validate:</p>
+        <form method="POST" action="index.php">
+            <input type="text" name="name" id="nameInput">
+            <button type="submit" id="submitButton">Submit</button>
+        </form>
+        <p id="greeting"><?php
+            if(isset($_POST['name'])) {
+                $name = $_POST['name'];
+                echo "Hello, $name!";
+            }
+        ?></p>
+    </div>
+
+    <script src="js/script.js"></script>
+</body>' > /var/www/harkonen.it06/index.php
+
+ln -s /etc/nginx/sites-available/harkonen.it06 /etc/nginx/sites-enabled
+rm -rf /etc/nginx/sites-enabled/default
+
+service php7.3-fpm start
+service php7.3-fpm restart
+service nginx restart
+nginx -t
+```
+
+melakukan konfigurasi pada DNS Server seperti berikut:
+```
+echo ';
+; BIND data file for local loopback interface
+;
+$TTL    604800
+@       IN      SOA     harkonen.it06.com.  root.harkonen.it06.com.  (
+                        2023111301      ; Serial
+                        604800          ; Refresh
+                        86400           ; Retry
+                        2419200         ; Expire
+                        604800 )        ; Negative Cache TTL
+;
+@               IN      NS      harkonen.it06.com.
+@               IN      A       192.236.4.2 ; IP Stilgar Load Balancer' > /etc/bind/jarkom/harkonen.it06.com
+
+service bind9 restart
+```
+
+### Test Result
+```
+lynx harkonen.it06.com
+```
+- ![topologi]()
+- ![topologi]()
+- ![topologi]()
+  
+# Soal 7
+Aturlah agar Stilgar dari fremen dapat dapat bekerja sama dengan maksimal, lalu lakukan testing dengan 5000 request dan 150 request/second. 
+
+```
+ab -n 5000 -c 150 http://harkonen.it06.com/
+```
+Ketika request berhasil dijalankan maka hasilnya seperti berikut:
+
+### Test Result
+```
+lynx harkonen.it06.com
+```
+- ![topologi]()
+- ![topologi]()
+
+
+# Soal 8
+Karena diminta untuk menuliskan peta tercepat menuju spice, buatlah analisis hasil testing dengan 500 request dan 50 request/second masing-masing algoritma Load Balancer dengan ketentuan sebagai berikut:
+- Nama Algoritma Load Balancer
+- Report hasil testing pada Apache Benchmark
+- Grafik request per second untuk masing masing algoritma. 
+- Analisis
+
+Request command yang dijalankan pada Client (setelah menjalankan konfigurasi Algoritma)
+```
+ab -n 500 -c 50 http://harkonen.it06.com/
+```
+Untuk hasil analisis dapat dilihat pada file IT06_Spice.pdf
+
+Algoritma Round-Robin
+```
+apt-get install bind9 nginx -y
+
+echo '
+ upstream myweb  {
+        server 192.236.1.1; #IP Feyd
+        server 192.236.1.2; #IP Rabban
+        server 192.236.1.3; #IP Vladimir
+ }
+
+ server {
+        listen 80;
+        server_name harkonen.it06.com;
+
+        location / {
+        proxy_pass http://myweb;
+        }
+ }' > /etc/nginx/sites-available/lb-jarkom
+
+ln -s /etc/nginx/sites-available/lb-jarkom /etc/nginx/sites-enabled
+rm -rf /etc/nginx/sites-enabled/default
+
+service nginx restart
+nginx -t
+```
+- ![topologi]()
+
+Algoritma Weighted Round-Robin
+```
+echo '
+ upstream myweb  {
+        server 192.236.1.1; #IP Feyd
+        server 192.236.1.2; #IP Rabban
+        server 192.236.1.3; #IP Vladimir
+ }
+
+ server {
+        listen 80;
+        server_name harkonen.it06.com;
+
+        location / {
+        proxy_pass http://myweb;
+        }
+ }' > /etc/nginx/sites-available/lb-jarkom
+
+unlink /etc/nginx/sites-enabled/lb-jarkom
+ln -s /etc/nginx/sites-available/lb-jarkom /etc/nginx/sites-enabled
+rm -rf /etc/nginx/sites-enabled/default
+
+service nginx restart
+nginx -t
+```
+- ![topologi]()
+
+Algoritma Least Connection
+```
+echo '
+ upstream myweb  {
+        server 192.236.1.1; #IP Feyd
+        server 192.236.1.2; #IP Rabban
+        server 192.236.1.3; #IP Vladimir
+ }
+
+ server {
+        listen 80;
+        server_name harkonen.it06.com;
+
+        location / {
+        proxy_pass http://myweb;
+        proxy_set_header    X-Real-IP $remote_addr;
+        proxy_set_header    X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header    Host $http_host;
+        }
+ }' > /etc/nginx/sites-available/lb-jarkom
+
+ln -s /etc/nginx/sites-available/lb-jarkom /etc/nginx/sites-enabled
+rm -rf /etc/nginx/sites-enabled/default
+
+service nginx restart
+nginx -t
+```
+- ![topologi]()
+
+Algoritma IP Hash
+```
+echo '
+ upstream myweb  {
+        ip_hash;
+        server 192.236.1.1; #IP Feyd
+        server 192.236.1.2; #IP Rabban
+        server 192.236.1.3; #IP Vladimir
+ }
+
+ server {
+        listen 80;
+        server_name harkonen.it06.com;
+
+        location / {
+        proxy_pass http://myweb;
+        proxy_set_header    X-Real-IP $remote_addr;
+        proxy_set_header    X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header    Host $http_host;
+        }
+ }' > /etc/nginx/sites-available/lb-jarkom
+
+ln -s /etc/nginx/sites-available/lb-jarkom /etc/nginx/sites-enabled
+rm -rf /etc/nginx/sites-enabled/default
+
+service nginx restart
+nginx -t
+```
+- ![topologi]()
+
+Algoritma Generic Hash
+```
+echo '
+ upstream myweb  {
+        hash $request_uri consistent;
+        server 192.236.1.1; #IP Feyd
+        server 192.236.1.2; #IP Rabban
+        server 192.236.1.3; #IP Vladimir
+ }
+
+ server {
+        listen 80;
+        server_name harkonen.it06.com;
+
+        location / {
+        proxy_pass http://myweb;
+        proxy_set_header    X-Real-IP $remote_addr;
+        proxy_set_header    X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header    Host $http_host;
+        }
+ }' > /etc/nginx/sites-available/lb-jarkom
+
+unlink /etc/nginx/sites-enabled/lb-jarkom
+ln -s /etc/nginx/sites-available/lb-jarkom /etc/nginx/sites-enabled
+rm -rf /etc/nginx/sites-enabled/default
+
+service nginx restart
+nginx -t
+```
+- ![topologi]()
+
+Grafik
+- ![topologi]()
+
+# Soal 9
+Dengan menggunakan algoritma Least-Connection, lakukan testing dengan menggunakan 3 worker, 2 worker, dan 1 worker sebanyak 1000 request dengan 10 request/second, kemudian tambahkan grafiknya pada peta.
+
+```
+echo '
+ upstream myweb  {
+        server 192.236.1.1; #IP Feyd
+        server 192.236.1.2; #IP Rabban
+        server 192.236.1.3; #IP Vladimir
+ }
+
+ server {
+        listen 80;
+        server_name harkonen.it06.com;
+
+        location / {
+        proxy_pass http://myweb;
+        proxy_set_header    X-Real-IP $remote_addr;
+        proxy_set_header    X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header    Host $http_host;
+        }
+ }' > /etc/nginx/sites-available/lb-jarkom
+
+ln -s /etc/nginx/sites-available/lb-jarkom /etc/nginx/sites-enabled
+rm -rf /etc/nginx/sites-enabled/default
+
+service nginx restart
+nginx -t
+```
+
+Request command pada Client:
+```
+ab -n 1000 -c 10 http://harkonen.it06.com/
+```
+
+- 3 Worker
+  ```
+  3 Worker: 757.29 [#/sec]
+  ```
+- 2 Worker
+  ```
+  2 Worker: 799.75 [#/sec]
+  ```
+- 1 Worker
+  ```
+  1 Worker: 867.98 [#/sec]
+  ```
+
+Grafik
+
+# Soal 10
+Selanjutnya coba tambahkan keamanan dengan konfigurasi autentikasi di LB dengan dengan kombinasi username: “secmart” dan password: “kcksyyy”, dengan yyy merupakan kode kelompok. Terakhir simpan file “htpasswd” nya di /etc/nginx/supersecret/
+
+Sebelum mengerjakan perlu untuk melakukan setup terlebih dahulu. Setelah itu, lakukan beberapa konfigurasi /etc/nginx/supersecret/ sebagai berikut 
+```
+mkdir -p /etc/nginx/supersecret/
+htpasswd -c -b /etc/nginx/supersecret/.htpasswd secmart kcksit06
+
+echo '
+ upstream myweb  {
+        server 192.236.1.1; #IP Feyd
+        server 192.236.1.2; #IP Rabban
+        server 192.236.1.3; #IP Vladimir
+ }
+
+ server {
+        listen 80;
+        server_name harkonen.it06.com;
+
+        location / {
+        proxy_pass http://myweb;
+        auth_basic "Restricted Access";
+        auth_basic_user_file /etc/nginx/supersecret/.htpasswd;
+        }
+ }' > /etc/nginx/sites-available/lb-jarkom
+
+unlink /etc/nginx/sites-enabled/lb-jarkom
+ln -s /etc/nginx/sites-available/lb-jarkom /etc/nginx/sites-enabled
+rm -rf /etc/nginx/sites-enabled/default
+
+service nginx restart
+nginx -t
+```
+
+### Test Result
+Alert saat pertama kali membuka Website
+- ![topologi]()
+Tampilan ketika diperintahkan untuk memasukkan Username
+- ![topologi]()
+Tampilan ketika diperintahkan untuk memasukkan Password 
+- ![topologi]()
+Hasil ketika berhasil memasukkan Username dan Password dengan benar  
+- ![topologi]()
+
 # Soal 11
 
 Lalu buat untuk setiap request yang mengandung /dune akan di proxy passing menuju halaman https://www.dunemovie.com.au/. (11) hint: (proxy_pass)
